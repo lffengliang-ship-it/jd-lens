@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Local browser state / profiles
+.boss_profile/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Runtime outputs (keep empty directories only)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Local archives or ad-hoc files
+data/raw/archive/
