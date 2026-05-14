@@ -2,6 +2,10 @@
 
 > Collect target job JDs via screenshots → AI analyzes market demand → Compare with your resume → Get actionable improvement paths
 
+## Why This Tool Exists
+
+Job platforms like Boss Zhipin enforce strict anti-bot controls. Scraping JDs can get your account banned, damaging your recommendation privileges and job search ability. JD Lens uses screenshots + OCR — you screenshot while browsing job sites naturally, paste them in, and they're automatically recognized and analyzed. Zero risk of account bans, zero impact on your job hunt.
+
 ## The Problem
 
 When job hunting, you might wonder:
