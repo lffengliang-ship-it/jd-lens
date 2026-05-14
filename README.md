@@ -1,194 +1,121 @@
-# bossJD
+# JD Lens — 看懂市场，补齐简历，精准求职
 
-> Local crawler + analysis toolkit for researching **AI / Agent-related technical jobs on BOSS 直聘**.
+> 截图收集目标岗位 JD → AI 分析市场需求 → 对比你的简历 → 给出可执行的补齐路径
 
-一个面向个人求职研究场景的本地工具：  
-**抓取岗位 → 过滤技术岗 → 结构化分析 → 生成学习报告与 roadmap**。
+## 解决什么问题
 
-> Current default configuration targets **Beijing**.  
-> 当前默认配置仍以 **北京** 为主，多城市参数化可以后续扩展。
+求职时你可能有这些困惑：
+- 不知道目标岗位到底要什么人
+- 不知道哪些能力是硬门槛、哪些能拉开差距
+- 不知道自己的简历差在哪、怎么改
+- 不知道不同行业/方向的岗位要求有什么差异
 
----
+JD Lens 帮你把模糊的市场需求变成**清晰的数据和洞察**，然后告诉你**具体怎么补**。
 
-## Why this project
+## 面向谁
 
-如果你在看 AI Agent、LLM、RAG、Workflow、Prompt Engineering 相关岗位，最大的痛点通常不是“找不到职位”，而是：
+运营 / AI运营 / 用户运营 / 产品运营 / 社群运营等岗位的求职者。
 
-- 职位描述非常散，不成体系
-- 技术岗与非技术岗混在一起
-- 同一个方向在不同公司描述方式不同
-- 很难从大量 JD 里总结出真正值得补的能力栈
+## 核心价值
 
-`bossJD` 的目标就是把这个过程工程化：
+| 功能 | 说明 |
+|------|------|
+| 📸 截图收集 JD | 浏览招聘网站时截图，Ctrl+V 粘贴即可自动识别和解析 |
+| 🔍 结构化解析 | 自动提取岗位名、薪资、职责、要求、加分项，30+运营能力词自动标签 |
+| 📊 市场分析报告 | AI 输出：人才需求画像、及格线 vs 拉开差距的能力、薪资全景、分方向对比 |
+| 💡 简历优化建议 | AI 输出：匹配度评分、差距分析、补齐优先级、简历改写建议、行动计划 |
+| 🔒 简历脱敏 | 上传简历后自动脱敏姓名/手机/邮箱等隐私信息，不上传敏感数据 |
 
-1. **批量采集** BOSS 岗位
-2. **过滤** 出 AI 相关技术岗
-3. **抽取** 技能词、要求、加分项
-4. **输出** CSV、学习报告和学习 roadmap
+## 使用流程
 
----
-
-## Features
-
-- Search BOSS job listings by keyword
-- Crawl job detail pages with a local browser session
-- Filter for technical AI-related roles
-- Save raw crawl results as JSONL
-- Convert raw jobs into structured CSV
-- Generate:
-  - a market-driven learning report
-  - a practical learning roadmap
-
----
-
-## Current scope
-
-This repository currently focuses on:
-
-- AI / Agent job discovery
-- technical-role filtering
-- local browser-driven crawling
-- rule-based text extraction and reporting
-
-It does **not** currently aim to:
-
-- bypass CAPTCHA or anti-bot protections
-- scrape private data without an authenticated local browser session
-- provide a hosted service
-- promise long-term schema stability for third-party integrations
-
----
-
-## Project structure
-
-```text
-src/                    core source code
-tests/                  unit tests
-data/raw/               raw JSONL output (git-ignored)
-data/processed/         processed CSV output (git-ignored)
-reports/                generated markdown reports (git-ignored)
+```
+1. 启动工具 → 打开浏览器
+2. 截图 JD → Ctrl+V 粘贴 → 自动识别解析
+3. 上传简历 → 自动脱敏
+4. 点击「市场分析报告」 → 看懂市场要什么
+5. 点击「简历优化建议」 → 知道自己差在哪、怎么补
 ```
 
----
+## 安装和运行
 
-## Requirements
-
+### 系统要求
+- macOS（OCR 使用系统自带 Vision 框架）
 - Python 3.11+
-- A local browser
-- `playwright` installed from `requirements.txt`
-- For CDP mode: Chrome remote debugging enabled in your local browser
 
----
-
-## Installation
+### 安装
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m playwright install chromium
+git clone https://github.com/your-username/jd-lens.git
+cd jd-lens/web_app
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
----
-
-## Quick start
-
-### 1) Collect jobs with a standalone Playwright browser
+### 启动
 
 ```bash
-python -m src.run_collect \
-  --keyword "AI Agent" \
-  --pages 2
+python app.py
 ```
 
-### 2) Reuse an already logged-in local Chrome session (recommended for real use)
+浏览器打开 **http://127.0.0.1:5888**
 
-```bash
-python -m src.run_collect \
-  --browser-mode cdp \
-  --cdp-proxy-url http://127.0.0.1:3456 \
-  --keyword "AI Agent" \
-  --pages 2 \
-  --technical-only \
-  --no-wait-for-login
+### 配置 LLM
+
+点击右上角 ⚙️ 按钮，填写：
+- **API Key**：你的大模型 API Key
+- **Base URL**：API 地址（OpenAI 官方 / 硅基流动 / 其他 OpenAI 兼容代理）
+- **模型名**：如 `gpt-4o`、`claude-sonnet-4-20250514` 等
+- **Provider**：OpenAI 兼容接口选 `OpenAI`，直连 Anthropic 选 `Anthropic`
+
+> 支持任何 OpenAI 协议兼容的 API（硅基流动、DeepSeek、通义千问等），也支持 Anthropic Claude 官方 API。
+
+## 项目结构
+
+```
+web_app/
+├── app.py                  # Flask 后端（页面路由 + API）
+├── ocr_engine.py           # macOS Vision OCR 引擎
+├── jd_analyzer.py          # JD 结构化解析 + 技能词库 + 本地存储
+├── resume_parser.py        # 简历解析引擎（PDF/Word/图片）
+├── resume_desensitizer.py  # 简历脱敏模块
+├── llm_client.py           # 统一 LLM 客户端 + Prompt 构建
+├── static/
+│   └── index.html          # 前端界面
+└── data/                   # 本地数据存储（自动生成）
 ```
 
-### 3) Generate report + roadmap
+## 技术架构
 
-```bash
-python -m src.run_analyze
+```
+截图 → [macOS Vision OCR] → 纯文本
+                              ↓
+                    [规则引擎：正则+词库] → 结构化字段
+                              ↓
+                        [本地 JSON 存储]
+                              ↓
+              ┌───────────────┴───────────────┐
+              ↓                               ↓
+     [LLM: 市场分析报告]           [LLM: 简历优化建议]
+     输入：JD 结构化数据            输入：脱敏简历 + JD 数据
+     输出：需求画像/能力模型         输出：差距分析/补齐路径
 ```
 
----
+- **OCR 层**：macOS 原生 Vision 框架，离线识别中英文，无需联网
+- **解析层**：纯规则引擎（正则 + 关键词词库），零 API 成本
+- **分析层**：云端 LLM，输出洞察和个性化建议
 
-## Outputs
+## 为什么截图而不是爬虫
 
-### Collection outputs
+Boss直聘等招聘网站对爬虫风控很严，使用爬虫可能导致账号被封、影响求职。JD Lens 采用**截图+OCR**的方式：
+- 零封号风险，不影响你正常找工作
+- 你本来就要浏览招聘网站，截图是顺手的事
+- 数据全在本地，不上传到任何第三方
 
-- `data/raw/jobs.jsonl`
-- `data/raw/errors.jsonl`
+## 数据安全
 
-### Analysis outputs
-
-- `data/processed/jobs.csv`
-- `reports/aiagent_beijing_learning_report.md`
-- `reports/aiagent_beijing_learning_roadmap.md`
-
----
-
-## Filtering rules
-
-The current technical-role filter is intended to keep **AI-related engineering roles** and exclude obvious noise.
-
-### Intended exclusions
-
-- product / operations / HR / legal / recruiting roles
-- intern / campus / fresh-graduate roles
-- generic technical roles with no AI-related signals in title or description
-
-### AI-related signals currently emphasized
-
-- AI / 人工智能 / 大模型 / LLM / AIGC
-- Agent / 智能体 / Workflow / MCP
-- RAG / Prompt / 多模态
-- LangChain / LangGraph / Dify / Coze / LlamaIndex
-
----
-
-## Testing
-
-```bash
-python -m unittest discover -s tests
-```
-
-Or:
-
-```bash
-make test
-```
-
----
-
-## Known limitations
-
-- The project depends on current page structure; selectors may need updates if BOSS changes its frontend
-- The extraction pipeline is primarily rule-based rather than LLM-based
-- City configuration is still conservative and currently defaults to Beijing-oriented settings
-- Raw crawl quality depends on local browser session state and target page accessibility
-
----
-
-## Compliance and responsible use
-
-Use this repository responsibly and in accordance with:
-
-- the target platform's terms
-- applicable law
-- your organization's internal policies
-
-This project is intended for **local research workflows**, not abusive scraping.
-
----
+- 所有 JD 数据和简历存储在**本地 JSON 文件**，不上传到任何服务器
+- 简历上传时**自动脱敏**（姓名、手机号、邮箱、微信号、身份证号）
+- 只有调用 LLM 分析时才会发送脱敏后的简历文本和 JD 数据到云端
+- LLM API Key 由用户自行配置，工具不收集任何 Key
 
 ## License
 

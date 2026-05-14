@@ -1,0 +1,8 @@
+playwright>=1.53,<2.0
+flask
+pillow
+pyobjc-framework-Quartz
+pyobjc-framework-Vision
+python-docx
+pdfminer.six
+requests

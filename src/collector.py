@@ -4,12 +4,12 @@ from datetime import datetime
 from typing import Callable, Iterator
 
 from .browser import PlaywrightBossBrowser
-from .config import BEIJING_CITY_NAME
+from .config import DEFAULT_CITY
 from .schemas import CrawlError, RawJobRecord, extract_job_id
 
 
 class BossCollector:
-    def __init__(self, browser: PlaywrightBossBrowser, *, city_name: str = BEIJING_CITY_NAME, city_code: str) -> None:
+    def __init__(self, browser: PlaywrightBossBrowser, *, city_name: str = DEFAULT_CITY, city_code: str) -> None:
         self.browser = browser
         self.city_name = city_name
         self.city_code = city_code

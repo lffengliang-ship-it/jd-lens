@@ -17,41 +17,46 @@ HEADING_ALIASES = {
 PREFERRED_REQUIREMENT_HEADINGS = ["岗位要求", "职位描述", "岗位职责"]
 BONUS_HEADINGS = ["加分项"]
 
+# ── 运营能力词库 ──────────────────────────────────────────
 SKILL_PATTERNS: OrderedDict[str, list[re.Pattern[str]]] = OrderedDict(
     {
-        "AI Agent": [re.compile(r"\bAI\s*Agent\b", re.I)],
-        "Agent": [re.compile(r"\bagent\b", re.I), re.compile(r"智能体")],
-        "LLM": [re.compile(r"\bLLM\b", re.I), re.compile(r"大模型")],
-        "RAG": [re.compile(r"\bRAG\b", re.I), re.compile(r"检索增强"), re.compile(r"知识库")],
-        "Workflow": [re.compile(r"\bWorkflow\b", re.I), re.compile(r"工作流"), re.compile(r"编排")],
-        "Prompt": [re.compile(r"\bPrompt\b", re.I), re.compile(r"提示词")],
-        "Function Calling": [re.compile(r"Function Calling", re.I)],
-        "Tool Calling": [re.compile(r"Tool Calling", re.I)],
-        "MCP": [re.compile(r"\bMCP\b", re.I)],
-        "LangChain": [re.compile(r"\bLangChain\b", re.I)],
-        "LangGraph": [re.compile(r"\bLangGraph\b", re.I)],
-        "AutoGen": [re.compile(r"\bAutoGen\b", re.I)],
-        "CrewAI": [re.compile(r"\bCrewAI\b", re.I)],
-        "Dify": [re.compile(r"\bDify\b", re.I)],
-        "Coze": [re.compile(r"\bCoze\b", re.I)],
-        "LlamaIndex": [re.compile(r"\bLlamaIndex\b", re.I)],
-        "OpenAI SDK": [re.compile(r"OpenAI\s*SDK", re.I)],
-        "Anthropic": [re.compile(r"\bAnthropic\b", re.I)],
-        "vLLM": [re.compile(r"\bvLLM\b", re.I)],
-        "Ollama": [re.compile(r"\bOllama\b", re.I)],
+        # 数据分析能力
+        "数据分析": [re.compile(r"数据分析"), re.compile(r"\bSQL\b", re.I), re.compile(r"\bExcel\b", re.I), re.compile(r"数据看板")],
+        "数据驱动": [re.compile(r"数据驱动"), re.compile(r"指标"), re.compile(r"漏斗"), re.compile(r"转化率")],
+        "AB测试": [re.compile(r"\bAB\b.*测试", re.I), re.compile(r"A/B测试", re.I), re.compile(r"实验设计")],
+        # 用户运营
+        "用户增长": [re.compile(r"用户增长"), re.compile(r"增长"), re.compile(r"拉新"), re.compile(r"获客")],
+        "用户留存": [re.compile(r"留存"), re.compile(r"促活"), re.compile(r"召回"), re.compile(r"唤醒")],
+        "用户转化": [re.compile(r"转化"), re.compile(r"付费转化"), re.compile(r"变现")],
+        "用户画像": [re.compile(r"用户画像"), re.compile(r"用户分层"), re.compile(r"分群"), re.compile(r"标签体系")],
+        "AARRR": [re.compile(r"AARRR", re.I), re.compile(r"海盗模型"), re.compile(r"增长模型")],
+        "用户生命周期": [re.compile(r"生命周期"), re.compile(r"LTV"), re.compile(r"用户旅程")],
+        # 内容运营
+        "内容策划": [re.compile(r"内容策划"), re.compile(r"内容运营"), re.compile(r"文案")],
+        "短视频": [re.compile(r"短视频"), re.compile(r"抖音"), re.compile(r"视频号"), re.compile(r"TikTok", re.I)],
+        "公众号": [re.compile(r"公众号"), re.compile(r"微信公众平台")],
+        "小红书": [re.compile(r"小红书"), re.compile(r"种草")],
+        # 社群运营
+        "社群运营": [re.compile(r"社群运营"), re.compile(r"社群管理"), re.compile(r"微信群")],
+        "私域运营": [re.compile(r"私域"), re.compile(r"私域流量"), re.compile(r"企微"), re.compile(r"企业微信")],
+        "社区运营": [re.compile(r"社区运营"), re.compile(r"社区管理"), re.compile(r"论坛")],
+        # 活动运营
+        "活动策划": [re.compile(r"活动策划"), re.compile(r"活动运营"), re.compile(r"营销活动"), re.compile(r"裂变活动")],
+        "事件营销": [re.compile(r"事件营销"), re.compile(r"热点营销"), re.compile(r"话题营销")],
+        # 工具与平台
         "Python": [re.compile(r"\bPython\b", re.I)],
-        "FastAPI": [re.compile(r"\bFastAPI\b", re.I)],
-        "Node.js": [re.compile(r"\bNode\.?js\b", re.I)],
-        "Docker": [re.compile(r"\bDocker\b", re.I)],
-        "Kubernetes": [re.compile(r"\bKubernetes\b", re.I), re.compile(r"\bK8s\b", re.I)],
-        "Redis": [re.compile(r"\bRedis\b", re.I)],
-        "PostgreSQL": [re.compile(r"\bPostgreSQL\b", re.I), re.compile(r"\bpgvector\b", re.I)],
-        "向量数据库": [re.compile(r"向量数据库"), re.compile(r"\bMilvus\b", re.I)],
-        "Elasticsearch": [re.compile(r"\bElasticsearch\b", re.I)],
-        "Embedding": [re.compile(r"\bEmbedding\b", re.I)],
-        "推理": [re.compile(r"推理")],
-        "评测": [re.compile(r"评测"), re.compile(r"evaluation", re.I)],
-        "多模态": [re.compile(r"多模态")],
+        "SQL": [re.compile(r"\bSQL\b", re.I)],
+        "Tableau": [re.compile(r"\bTableau\b", re.I)],
+        "GrowingIO": [re.compile(r"GrowingIO", re.I)],
+        "神策": [re.compile(r"神策"), re.compile(r"Sensors", re.I)],
+        # AI 相关
+        "AI/大模型": [re.compile(r"\bAI\b"), re.compile(r"人工智能"), re.compile(r"大模型"), re.compile(r"\bLLM\b", re.I), re.compile(r"\bAIGC\b", re.I)],
+        "Prompt": [re.compile(r"\bPrompt\b", re.I), re.compile(r"提示词")],
+        "ChatGPT": [re.compile(r"ChatGPT", re.I), re.compile(r"智能对话"), re.compile(r"智能客服")],
+        # 通用软技能
+        "跨部门协作": [re.compile(r"跨部门"), re.compile(r"协作"), re.compile(r"沟通能力")],
+        "项目管理": [re.compile(r"项目管理"), re.compile(r"\bPMP\b", re.I)],
+        "复盘": [re.compile(r"复盘"), re.compile(r"总结")],
     }
 )
 
@@ -155,6 +160,7 @@ def parse_raw_job(record: RawJobRecord, categories: list[str] | None = None) -> 
         company_name=record.company_name,
         job_url=record.job_url,
         keyword=record.keyword,
+        city=record.city,
         requirement_text=requirement_text,
         bonus_text=bonus_text,
         matched_keywords=matched_keywords,

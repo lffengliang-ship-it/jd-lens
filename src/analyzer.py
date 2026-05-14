@@ -8,13 +8,15 @@ from .parser import parse_raw_job
 from .schemas import ParsedJobRecord, RawJobRecord, make_fallback_key
 
 
+# ── 运营能力分类 ──────────────────────────────────────────
 CATEGORY_TO_TERMS = {
-    "LLM 基础能力": {"LLM", "Prompt", "Function Calling", "Tool Calling", "OpenAI SDK", "Anthropic"},
-    "RAG / 知识库": {"RAG", "Embedding", "向量数据库", "Elasticsearch", "PostgreSQL"},
-    "Agent / Workflow 编排": {"AI Agent", "Agent", "Workflow", "MCP", "LangGraph", "AutoGen", "CrewAI"},
-    "Agent 应用框架": {"LangChain", "Dify", "Coze", "LlamaIndex"},
-    "工程落地能力": {"Python", "FastAPI", "Node.js", "Redis"},
-    "推理部署与系统工程": {"vLLM", "Ollama", "Docker", "Kubernetes", "推理", "评测", "多模态"},
+    "数据分析能力": {"数据分析", "数据驱动", "AB测试", "SQL", "Tableau", "GrowingIO", "神策"},
+    "用户增长能力": {"用户增长", "用户留存", "用户转化", "用户画像", "AARRR", "用户生命周期"},
+    "内容运营能力": {"内容策划", "短视频", "公众号", "小红书"},
+    "社群/私域能力": {"社群运营", "私域运营", "社区运营"},
+    "活动策划能力": {"活动策划", "事件营销"},
+    "AI 相关能力": {"AI/大模型", "Prompt", "ChatGPT"},
+    "通用能力": {"跨部门协作", "项目管理", "复盘"},
 }
 
 
@@ -61,23 +63,86 @@ def count_categories(records: list[ParsedJobRecord]) -> Counter[str]:
     return counter
 
 
-def learning_recommendations(category_counts: Counter[str]) -> list[str]:
-    ordered = [category for category, _ in category_counts.most_common()]
-    recommendations: list[str] = []
-    for category in ordered:
-        if category == "工程落地能力":
-            recommendations.append("优先补 Python / API 服务化 / 数据处理基础，把 Agent 能力落到真实工程里。")
-        elif category == "RAG / 知识库":
-            recommendations.append("系统学习 RAG、Embedding、向量检索与知识库构建，这是大多数 AI 应用岗位的共通底座。")
-        elif category == "Agent / Workflow 编排":
-            recommendations.append("重点补 Agent 编排：Tool Calling、MCP、多步工作流与 LangGraph/AutoGen 类框架。")
-        elif category == "Agent 应用框架":
-            recommendations.append("选 1~2 个热门框架做项目：LangChain、Dify、Coze 或 LlamaIndex。")
-        elif category == "推理部署与系统工程":
-            recommendations.append("补部署与推理服务：Docker、Kubernetes、vLLM/Ollama，提升模型系统化落地能力。")
-        elif category == "LLM 基础能力":
-            recommendations.append("夯实 LLM 基础：Prompt、上下文管理、函数调用和模型接入 SDK。")
-    return recommendations
+def _salary_stats(records: list[ParsedJobRecord]) -> dict:
+    """从薪资文本中提取统计信息。"""
+    import re
+    salaries = []
+    for record in records:
+        text = record.salary_text or ""
+        # 匹配 "15-25K" 或 "15k-25k" 或 "15000-25000"
+        match = re.search(r"(\d+)\s*[-~—]\s*(\d+)\s*[kK万]?", text)
+        if match:
+            low = int(match.group(1))
+            high = int(match.group(2))
+            if high < 100:  # K 为单位
+                low *= 1000
+                high *= 1000
+            salaries.append((low, high))
+    if not salaries:
+        return {"count": 0}
+    avg_low = sum(s[0] for s in salaries) // len(salaries)
+    avg_high = sum(s[1] for s in salaries) // len(salaries)
+    min_low = min(s[0] for s in salaries)
+    max_high = max(s[1] for s in salaries)
+    return {
+        "count": len(salaries),
+        "avg_low": avg_low,
+        "avg_high": avg_high,
+        "avg_mid": (avg_low + avg_high) // 2,
+        "min": min_low,
+        "max": max_high,
+    }
+
+
+def _experience_distribution(records: list[ParsedJobRecord]) -> dict[str, int]:
+    import re
+    dist: dict[str, int] = Counter()
+    for record in records:
+        text = record.experience_text or ""
+        if "不限" in text or not text:
+            dist["经验不限"] += 1
+        elif "应届" in text:
+            dist["应届生"] += 1
+        elif "1" in text and ("3" in text or "年" in text):
+            match = re.search(r"(\d+)\s*[-~—]\s*(\d+)\s*年", text)
+            if match:
+                dist[f"{match.group(1)}-{match.group(2)}年"] += 1
+            else:
+                dist["1-3年"] += 1
+        elif "3" in text and "5" in text:
+            dist["3-5年"] += 1
+        elif "5" in text and ("10" in text or "年" in text):
+            dist["5-10年"] += 1
+        else:
+            dist[text.strip() or "其他"] += 1
+    return dict(dist)
+
+
+def _education_distribution(records: list[ParsedJobRecord]) -> dict[str, int]:
+    dist: dict[str, int] = Counter()
+    for record in records:
+        text = record.education_text or ""
+        if "不限" in text or not text:
+            dist["学历不限"] += 1
+        elif "大专" in text:
+            dist["大专"] += 1
+        elif "本科" in text:
+            dist["本科"] += 1
+        elif "硕士" in text:
+            dist["硕士"] += 1
+        elif "博士" in text:
+            dist["博士"] += 1
+        else:
+            dist[text.strip() or "其他"] += 1
+    return dict(dist)
+
+
+def _city_distribution(records: list[ParsedJobRecord]) -> dict[str, int]:
+    dist: dict[str, int] = Counter()
+    for record in records:
+        city = getattr(record, "city", None) or "未知"
+        dist[city] += 1
+    return dict(dist)
 
 
 def _representative_quotes(records: list[ParsedJobRecord]) -> dict[str, list[str]]:
@@ -89,39 +154,108 @@ def _representative_quotes(records: list[ParsedJobRecord]) -> dict[str, list[str
                 continue
             snippet = (record.requirement_text or record.bonus_text).replace("\n", " ").strip()
             if snippet and snippet not in snippets:
-                snippets.append(f"- {record.job_title} / {record.company_name}: {snippet[:120]}")
+                snippets.append(f"- [{record.city}] {record.job_title} / {record.company_name}: {snippet[:150]}")
             if len(snippets) == 3:
                 break
         examples[category] = snippets
     return examples
 
 
+def resume_suggestions(category_counts: Counter[str], term_counts: Counter[str]) -> list[str]:
+    """根据分析结果生成简历优化建议。"""
+    suggestions: list[str] = []
+    top_categories = [cat for cat, _ in category_counts.most_common(5)]
+    top_terms = [term for term, _ in term_counts.most_common(10)]
+
+    if "数据分析能力" in top_categories:
+        suggestions.append("简历中突出数据成果：用具体数字描述你运营过的项目效果（如「DAU提升30%」「转化率从2%提升到5%」），这比堆砌技能更有说服力。")
+
+    if "用户增长能力" in top_categories:
+        suggestions.append("体现增长思维：写清楚你是如何设计增长实验、如何定义北极星指标、如何通过AARRR漏斗分析找到增长点的。")
+
+    if "内容运营能力" in top_categories:
+        suggestions.append("展示内容作品：附上你策划过的爆款内容链接或数据截图，比文字描述有力10倍。如果目标公司重视小红书/抖音，准备对应平台的作品集。")
+
+    if "社群/私域能力" in top_categories:
+        suggestions.append("量化社群运营成果：如「管理20个社群共5000人」「社群月活跃度60%」「社群贡献GMV占比30%」等。")
+
+    if "AI 相关能力" in top_categories:
+        suggestions.append("重点展示 AI 实践经验：即使是个人项目也行，比如用 ChatGPT/AIGC 工具优化内容生产流程、用数据分析+AI模型做用户分群等。这块是差异化竞争力。")
+
+    if "活动策划能力" in top_categories:
+        suggestions.append("列出代表性活动案例：活动主题、你的角色、活动效果数据（参与人数、转化率、ROI等）。")
+
+    suggestions.append(f"建议简历中优先突出这些高频关键词：{', '.join(top_terms[:6])}，它们出现在大量JD中，HR和ATS系统会优先匹配。")
+
+    return suggestions
+
+
 def render_report(records: list[ParsedJobRecord]) -> str:
     term_counts = count_skill_terms(records)
     category_counts = count_categories(records)
-    recommendations = learning_recommendations(category_counts)
+    salary = _salary_stats(records)
+    exp_dist = _experience_distribution(records)
+    edu_dist = _education_distribution(records)
+    city_dist = _city_distribution(records)
     examples = _representative_quotes(records)
+    suggestions = resume_suggestions(category_counts, term_counts)
+
     lines = [
-        "# 北京 AI Agent 岗位学习方向报告",
+        "# AI 运营 / 用户运营岗位 JD 分析报告",
         "",
         f"- 生成时间：{datetime.now().isoformat(timespec='seconds')}",
         f"- 去重后岗位数：{len(records)}",
         "",
-        "## 高频技能词 Top 15",
-        "",
     ]
 
-    for term, count in term_counts.most_common(15):
+    # 薪资概况
+    if salary["count"] > 0:
+        lines.extend([
+            "## 薪资概况",
+            "",
+            f"- 有效薪资样本：{salary['count']} 条",
+            f"- 平均薪资范围：{salary['avg_low']:,} - {salary['avg_high']:,} 元/月",
+            f"- 整体薪资范围：{salary['min']:,} - {salary['max']:,} 元/月",
+            "",
+        ])
+
+    # 经验要求分布
+    if exp_dist:
+        lines.extend(["## 经验要求分布", ""])
+        for exp, count in sorted(exp_dist.items(), key=lambda x: -x[1]):
+            lines.append(f"- {exp}: {count} 个岗位")
+        lines.append("")
+
+    # 学历要求分布
+    if edu_dist:
+        lines.extend(["## 学历要求分布", ""])
+        for edu, count in sorted(edu_dist.items(), key=lambda x: -x[1]):
+            lines.append(f"- {edu}: {count} 个岗位")
+        lines.append("")
+
+    # 城市分布
+    if city_dist:
+        lines.extend(["## 城市分布", ""])
+        for city, count in sorted(city_dist.items(), key=lambda x: -x[1]):
+            lines.append(f"- {city}: {count} 个岗位")
+        lines.append("")
+
+    # 高频能力词
+    lines.extend(["## 高频能力词 Top 20", ""])
+    for term, count in term_counts.most_common(20):
         lines.append(f"- {term}: {count}")
 
-    lines.extend(["", "## 高频学习方向", ""])
+    # 能力方向分布
+    lines.extend(["", "## 能力方向分布", ""])
     for category, count in category_counts.most_common():
         lines.append(f"- {category}: {count}")
 
-    lines.extend(["", "## 学习建议", ""])
-    for item in recommendations:
+    # 简历优化建议
+    lines.extend(["", "## 简历优化建议", ""])
+    for item in suggestions:
         lines.append(f"- {item}")
 
+    # 代表性岗位摘录
     lines.extend(["", "## 代表性岗位摘录", ""])
     for category, snippets in examples.items():
         if not snippets:
@@ -130,55 +264,4 @@ def render_report(records: list[ParsedJobRecord]) -> str:
         lines.extend(snippets)
         lines.append("")
 
-    return "\n".join(lines).rstrip() + "\n"
-
-
-def render_roadmap(records: list[ParsedJobRecord]) -> str:
-    term_counts = count_skill_terms(records)
-    category_counts = count_categories(records)
-    lines = [
-        "# 北京 AI Agent 技术岗学习 Roadmap",
-        "",
-        f"- 生成时间：{datetime.now().isoformat(timespec='seconds')}",
-        f"- 样本岗位数：{len(records)}",
-        "",
-        "## 市场信号",
-        "",
-    ]
-    for term, count in term_counts.most_common(10):
-        lines.append(f"- {term}: {count}")
-
-    lines.extend(
-        [
-            "",
-            "## 入门",
-            "",
-            "- 先补 Python、Linux、Git、HTTP/JSON、基础 SQL，把真实工程开发链路打通。",
-            "- 夯实 LLM 基础：Prompt、上下文管理、函数/工具调用、模型 API 接入。",
-            "- 入门 RAG：Embedding、向量检索、知识切分、召回与重排的基本概念。",
-            "",
-            "## 进阶",
-            "",
-            "- 重点补 Agent / Workflow 编排，优先学习 LangGraph、MCP、多步任务拆解与状态管理。",
-            "- 选 1~2 个热门框架做深：LangChain、Dify、Coze、LlamaIndex。",
-            "- 补部署与系统工程：Docker、Kubernetes、推理服务、评测流程、多模态接入。",
-            "",
-            "## 作品集",
-            "",
-            "- 做一个企业知识库 Agent：包含 RAG、向量检索、工具调用和对话界面。",
-            "- 做一个多步骤 Workflow Agent：支持任务规划、执行、重试、日志与评测。",
-            "- 做一个可部署 Demo：提供 API、容器化、README、架构图和效果评估指标。",
-            "",
-            "## 面试准备",
-            "",
-            "- 准备 3 段项目故事：问题背景、架构方案、效果指标、踩坑与权衡。",
-            "- 高频题重点准备：RAG 方案设计、Agent 状态管理、Tool Calling、MCP、Prompt 评测。",
-            "- 工程面要能讲清：服务化、缓存、消息队列、并发、容器化部署、故障定位。",
-            "",
-            "## 对应市场优先级",
-            "",
-        ]
-    )
-    for category, count in category_counts.most_common():
-        lines.append(f"- {category}: {count}")
     return "\n".join(lines).rstrip() + "\n"

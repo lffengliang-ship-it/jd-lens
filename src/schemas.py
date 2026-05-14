@@ -62,8 +62,9 @@ class ParsedJobRecord:
     company_name: str
     job_url: str
     keyword: str
-    requirement_text: str
-    bonus_text: str
+    city: str = ""
+    requirement_text: str = ""
+    bonus_text: str = ""
     matched_keywords: list[str] = field(default_factory=list)
     skill_terms: list[str] = field(default_factory=list)
     categories: list[str] = field(default_factory=list)

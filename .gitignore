@@ -27,3 +27,7 @@ reports/*
 
 # Local archives or ad-hoc files
 data/raw/archive/
+
+# Web app user data (jobs, resume, LLM config)
+web_app/data/
+web_app/__pycache__/

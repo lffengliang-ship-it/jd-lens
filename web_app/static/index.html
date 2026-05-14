@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JD 分析工具 v2 - AI运营岗位</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f5f7; color: #1d1d1f; }
+
+  .intro-banner {
+    background: #fff; border-bottom: 1px solid #e0e0e0; padding: 24px 32px;
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;
+  }
+  .intro-content { max-width: 600px; }
+  .intro-content h1 { font-size: 24px; font-weight: 700; color: #0071e3; margin-bottom: 4px; }
+  .intro-tagline { font-size: 16px; color: #1d1d1f; font-weight: 500; }
+  .intro-desc { font-size: 13px; line-height: 1.5; margin-top: 6px; color: #86868b; }
+  .intro-flow { display: flex; align-items: center; gap: 10px; margin-top: 12px; justify-content: center; }
+  .flow-step {
+    background: #e5f0ff; color: #0071e3; border-radius: 6px;
+    padding: 4px 12px; font-size: 12px; font-weight: 500;
+  }
+  .flow-arrow { color: #86868b; font-size: 14px; }
+  .intro-actions { display:flex; align-items:center; gap:12px; }
+  .stats { color: #86868b; font-size: 13px; }
+  .config-btn {
+    background: none; border: 1px solid #d1d1d6; border-radius: 6px;
+    padding: 4px 12px; font-size: 13px; cursor: pointer; color: #1d1d1f;
+  }
+  .config-btn:hover { border-color: #0071e3; color: #0071e3; }
+
+  .main { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .card h2 { font-size: 15px; margin-bottom: 14px; color: #1d1d1f; }
+
+  /* 截图上传区 */
+  .upload-zone {
+    border: 2px dashed #d1d1d6; border-radius: 10px; padding: 40px 20px;
+    text-align: center; cursor: pointer; transition: all 0.2s ease;
+    position: relative; min-height: 160px;
+  }
+  .upload-zone:hover { border-color: #0071e3; background: #f0f7ff; }
+  .upload-zone.dragover { border-color: #0071e3; background: #e5f0ff; transform: scale(1.01); }
+  .upload-zone .icon { font-size: 40px; margin-bottom: 8px; opacity: 0.7; }
+  .upload-zone .hint-main { font-size: 14px; font-weight: 500; color: #1d1d1f; }
+  .upload-zone .hint-sub { font-size: 12px; color: #86868b; margin-top: 6px; line-height: 1.5; }
+  .upload-zone .bg-hint {
+    position: absolute; bottom: 10px; left: 0; right: 0;
+    font-size: 11px; color: #aeaeb2; text-align: center;
+  }
+  .upload-zone.processing { opacity: 0.5; pointer-events: none; }
+
+  /* 结果区 */
+  .result-area { margin-top: 12px; }
+  .ocr-text {
+    background: #f5f5f7; border-radius: 6px; padding: 10px 14px;
+    font-size: 12px; line-height: 1.6; max-height: 160px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .parsed-info { margin-top: 8px; }
+  .parsed-info .field {
+    display: inline-flex; align-items: center;
+    background: #e8e8ed; border-radius: 4px; padding: 2px 8px;
+    font-size: 12px; margin: 2px 3px;
+  }
+  .parsed-info .field.value { background: #e5f0ff; color: #0071e3; font-weight: 500; }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .skill-tag {
+    background: #e5f0ff; color: #0071e3; border-radius: 10px;
+    padding: 2px 8px; font-size: 11px; font-weight: 500;
+  }
+  .skill-tag.category { background: #fff3e0; color: #e65100; }
+
+  /* 岗位列表 */
+  .job-list { max-height: 400px; overflow-y: auto; }
+  .job-item {
+    border: 1px solid #e8e8ed; border-radius: 6px; padding: 10px 14px;
+    margin-bottom: 6px; position: relative;
+  }
+  .job-item:hover { border-color: #0071e3; }
+  .job-item .title { font-weight: 600; font-size: 13px; }
+  .job-item .meta { color: #86868b; font-size: 11px; margin-top: 3px; }
+  .job-item .meta span { margin-right: 8px; }
+  .job-item .salary { color: #e65100; font-weight: 600; }
+  .job-item .del-btn {
+    position: absolute; top: 6px; right: 6px; background: none;
+    border: none; color: #aeaeb2; cursor: pointer; font-size: 14px;
+    width: 20px; height: 20px; border-radius: 50%;
+  }
+  .job-item .del-btn:hover { background: #fee; color: #d00; }
+
+  /* 分析区域 */
+  .analysis-area { grid-column: 1 / -1; }
+  .analysis-section {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;
+  }
+
+  /* 简历上传区 */
+  .resume-upload-zone {
+    border: 2px dashed #d1d1d6; border-radius: 8px; padding: 24px 16px;
+    text-align: center; cursor: pointer; transition: all 0.2s ease;
+  }
+  .resume-upload-zone:hover { border-color: #34c759; background: #f0faf4; }
+  .resume-upload-zone.has-resume {
+    border-color: #34c759; border-style: solid; background: #f0faf4;
+  }
+  .resume-upload-zone .icon { font-size: 24px; }
+
+  .resume-preview {
+    background: #f5f5f7; border-radius: 6px; padding: 10px 14px;
+    font-size: 12px; line-height: 1.5; max-height: 120px; overflow-y: auto;
+  }
+
+  /* 按钮 */
+  .btn {
+    background: #0071e3; color: #fff; border: none; border-radius: 8px;
+    padding: 10px 18px; font-size: 14px; cursor: pointer; font-weight: 500;
+  }
+  .btn:hover { background: #0077ed; }
+  .btn.outline { background: #fff; color: #0071e3; border: 1px solid #0071e3; }
+  .btn.outline:hover { background: #f0f7ff; }
+  .btn.success { background: #34c759; }
+  .btn.success:hover { background: #2db84d; }
+  .btn.success.outline { background: #fff; color: #34c759; border-color: #34c759; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+  /* 报告/建议 */
+  .llm-result {
+    background: #f5f5f7; border-radius: 8px; padding: 18px 22px;
+    font-size: 14px; line-height: 1.8; white-space: pre-wrap;
+    max-height: 600px; overflow-y: auto;
+  }
+
+  .empty { color: #86868b; text-align: center; padding: 30px 0; font-size: 13px; }
+  .loading-inline { display: inline-block; width: 14px; height: 14px; border: 2px solid #ccc; border-top-color: #0071e3; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 配置弹窗 */
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3); z-index: 100; justify-content: center; align-items: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 12px; padding: 24px; width: 480px; max-width: 90vw;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  }
+  .modal h2 { font-size: 16px; margin-bottom: 16px; }
+  .modal label { font-size: 13px; color: #86868b; display: block; margin-bottom: 4px; margin-top: 12px; }
+  .modal input, .modal select {
+    width: 100%; border: 1px solid #d1d1d6; border-radius: 6px;
+    padding: 8px 12px; font-size: 14px;
+  }
+  .modal input:focus, .modal select:focus { outline: none; border-color: #0071e3; }
+
+  .tag-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #e5f0ff; color: #0071e3; border-radius: 4px;
+    padding: 1px 6px; font-size: 11px; margin-left: 6px;
+  }
+
+  @media (max-width: 768px) {
+    .main { grid-template-columns: 1fr; }
+    .analysis-section { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="intro-banner">
+  <div class="intro-content">
+    <h1>JD Lens</h1>
+    <p class="intro-tagline">投简历没回复，工作难找。<br>不是你不努力，是没看懂门道。</p>
+    <p class="intro-desc">先看清市场要什么人，再对照自己补齐简历，一击命中。</p>
+    <div class="intro-flow">
+      <span class="flow-step">📸 截图JD</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">🔍 识别解析</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">📊 市场画像</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step">💡 简历补齐</span>
+    </div>
+  </div>
+  <div class="intro-actions">
+    <span class="stats" id="headerStats">已收集 0 个岗位</span>
+    <button class="config-btn" onclick="showConfigModal()">⚙️ LLM 设置</button>
+    <span style="font-size:11px;color:#aeaeb2;margin-left:4px">需先配置大模型API Key才能使用分析功能</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- 左侧：截图上传 + 结果 -->
+  <div class="card">
+    <h2>上传 JD 截图 <span class="tag-badge">OCR</span></h2>
+    <div class="upload-zone" id="uploadZone">
+      <div class="icon">📸</div>
+      <div class="hint-main">拖拽截图到这里，或 Ctrl+V 粘贴</div>
+      <div class="hint-sub">支持 Boss直聘 / 拉勾 / 猎聘 等任何招聘平台的截图<br>每次上传一条岗位，工具自动识别并解析</div>
+      <div class="bg-hint">鼠标悬停此处变色即可粘贴 · 支持拖拽文件 · 支持点击上传</div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
+    </div>
+
+    <div class="result-area" id="resultArea" style="display:none">
+      <h2 style="font-size:13px;margin-bottom:6px">识别结果</h2>
+      <div class="ocr-text" id="ocrText"></div>
+      <div class="parsed-info" id="parsedInfo"></div>
+      <div class="skill-tags" id="skillTags"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn outline" onclick="exportCSV()">📥 分析CSV</button>
+      <button class="btn outline" onclick="exportRawCSV()">📥 结构化文本CSV</button>
+    </div>
+  </div>
+
+  <!-- 右侧：已收集列表 -->
+  <div class="card">
+    <h2>已收集岗位 <span id="jobCount" style="color:#86868b;font-weight:400;font-size:12px"></span></h2>
+    <div class="job-list" id="jobList">
+      <div class="empty">还没有收集任何岗位<br>上传截图开始分析</div>
+    </div>
+  </div>
+
+  <!-- 分析区域：简历 + 两个按钮 -->
+  <div class="card analysis-area">
+    <h2>AI 分析</h2>
+    <div class="analysis-section">
+      <!-- 简历上传 -->
+      <div>
+        <h3 style="font-size:13px;margin-bottom:10px">上传简历 <span class="tag-badge" style="background:#f0faf4;color:#34c759">脱敏</span></h3>
+        <div class="resume-upload-zone" id="resumeZone">
+          <div class="icon">📄</div>
+          <div style="font-size:13px">拖拽或点击上传简历</div>
+          <div style="font-size:11px;color:#86868b;margin-top:4px">PDF / Word / 图片<br>上传后自动脱敏，隐私信息不会泄露</div>
+          <input type="file" id="resumeFileInput" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg" style="display:none">
+        </div>
+        <div id="resumePreview" style="display:none;margin-top:8px">
+          <div style="font-size:12px;color:#86868b;margin-bottom:4px" id="resumeMaskSummary"></div>
+          <div class="resume-preview" id="resumeText"></div>
+          <div class="actions" style="margin-top:6px">
+            <button class="btn outline" style="font-size:12px;padding:4px 10px" onclick="removeResume()">删除简历</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 两个按钮 -->
+      <div style="display:flex;flex-direction:column;justify-content:center;gap:12px;padding:0 20px">
+        <button class="btn" onclick="generateMarketReport()" id="btnMarket">
+          📊 市场分析报告
+        </button>
+        <button class="btn success" onclick="generateResumeFeedback()" id="btnResume">
+          💡 简历优化建议
+        </button>
+        <div style="font-size:11px;color:#86868b;text-align:center">
+          市场分析：需 ≥1 条 JD<br>简历建议：需简历 + JD
+        </div>
+      </div>
+
+      <!-- 状态指示 -->
+      <div style="display:flex;flex-direction:column;justify-content:center;font-size:12px;color:#86868b;padding:0 10px">
+        <div id="statusJobs">● JD: <span style="color:#86868b">0 条</span></div>
+        <div id="statusResume">● 简历: <span style="color:#d1d1d6">未上传</span></div>
+        <div id="statusLLM">● LLM: <span style="color:#d1d1d6">未配置</span></div>
+      </div>
+    </div>
+
+    <!-- 报告展示区 -->
+    <div id="reportCard" style="display:none;margin-top:16px">
+      <h2 style="font-size:14px" id="reportTitle">分析报告</h2>
+      <div class="llm-result" id="reportContent"></div>
+      <div class="actions" style="margin-top:8px">
+        <button class="btn outline" onclick="copyReport()">📋 复制</button>
+        <button class="btn outline" onclick="downloadReport()">📥 下载 Markdown</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LLM 配置弹窗 -->
+<div class="modal-overlay" id="configModal">
+  <div class="modal">
+    <h2>LLM 配置</h2>
+    <label>API Provider</label>
+    <select id="cfgProvider">
+      <option value="openai">OpenAI / 兼容接口（硅基流动等）</option>
+      <option value="anthropic">Anthropic (Claude)</option>
+    </select>
+    <label>API Key</label>
+    <input type="password" id="cfgApiKey" placeholder="sk-xxx 或 ak-xxx">
+    <label>Base URL（OpenAI 兼容接口可改）</label>
+    <input type="text" id="cfgBaseUrl" placeholder="https://api.openai.com/v1" value="https://api.openai.com/v1">
+    <label>模型名</label>
+    <input type="text" id="cfgModel" placeholder="gpt-4o" value="gpt-4o">
+    <div class="actions" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn outline" onclick="hideConfigModal()">取消</button>
+      <button class="btn" onclick="saveConfig()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+
+// ── 截图上传 ──
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) uploadImage(file);
+});
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) uploadImage(file);
+});
+document.addEventListener('paste', e => {
+  for (const item of e.clipboardData.items) {
+    if (item.type.startsWith('image/')) {
+      uploadImage(item.getAsFile());
+      break;
+    }
+  }
+});
+
+async function uploadImage(file) {
+  uploadZone.classList.add('processing');
+  uploadZone.querySelector('.icon').innerHTML = '<div class="loading-inline"></div>';
+  uploadZone.querySelector('.hint-main').textContent = '识别中...';
+
+  const form = new FormData();
+  form.append('image', file);
+  try {
+    const res = await fetch(API + '/api/analyze', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.error) { alert(data.error); } else { showResult(data); loadJobs(); }
+  } catch(e) { alert('请求失败: ' + e.message); }
+
+  uploadZone.classList.remove('processing');
+  uploadZone.querySelector('.icon').textContent = '📸';
+  uploadZone.querySelector('.hint-main').innerHTML = '拖拽截图到这里，或 Ctrl+V 粘贴';
+  fileInput.value = '';
+}
+
+function showResult(data) {
+  document.getElementById('resultArea').style.display = 'block';
+  document.getElementById('ocrText').textContent = data.ocr_text || '(无文本)';
+  const job = data.job;
+  let fields = '';
+  if (job.job_title) fields += `<span class="field value">${job.job_title}</span>`;
+  if (job.salary) fields += `<span class="field value">${job.salary}</span>`;
+  if (job.city) fields += `<span class="field value">${job.city}</span>`;
+  if (job.experience) fields += `<span class="field">${job.experience}</span>`;
+  if (job.education) fields += `<span class="field">${job.education}</span>`;
+  if (job.company) fields += `<span class="field">${job.company}</span>`;
+  document.getElementById('parsedInfo').innerHTML = fields;
+  const tags = document.getElementById('skillTags');
+  let tagHtml = '';
+  (job.categories || []).forEach(c => tagHtml += `<span class="skill-tag category">${c}</span>`);
+  (job.skills || []).forEach(s => tagHtml += `<span class="skill-tag">${s}</span>`);
+  tags.innerHTML = tagHtml;
+}
+
+// ── 岗位列表 ──
+async function loadJobs() {
+  const res = await fetch(API + '/api/jobs');
+  const data = await res.json();
+  const jobs = data.jobs || [];
+  document.getElementById('headerStats').textContent = `已收集 ${jobs.length} 个岗位`;
+  document.getElementById('jobCount').textContent = `(${jobs.length})`;
+  document.getElementById('statusJobs').innerHTML = `● JD: <span style="color:${jobs.length?'#34c759':'#86868b'}">${jobs.length} 条</span>`;
+
+  const list = document.getElementById('jobList');
+  if (!jobs.length) { list.innerHTML = '<div class="empty">还没有收集任何岗位<br>上传截图开始分析</div>'; return; }
+
+  list.innerHTML = jobs.map(j => `
+    <div class="job-item">
+      <button class="del-btn" onclick="delJob('${j.id}')" title="删除">✕</button>
+      <div class="title">${j.job_title || '未知岗位'}</div>
+      <div class="meta">
+        ${j.salary ? `<span class="salary">${j.salary}</span>` : ''}
+        ${j.city ? `<span>${j.city}</span>` : ''}
+        ${j.company ? `<span>${j.company}</span>` : ''}
+        ${j.experience ? `<span>${j.experience}</span>` : ''}
+      </div>
+      ${(j.skills||[]).length ? `<div style="margin-top:4px">${j.skills.slice(0,5).map(s=>`<span class="skill-tag" style="font-size:10px;padding:1px 6px">${s}</span>`).join('')}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function delJob(id) {
+  await fetch(API + '/api/jobs/' + id, { method: 'DELETE' });
+  loadJobs();
+}
+
+// ── 简历上传 ──
+const resumeZone = document.getElementById('resumeZone');
+const resumeFileInput = document.getElementById('resumeFileInput');
+
+resumeZone.addEventListener('click', () => resumeFileInput.click());
+resumeZone.addEventListener('dragover', e => { e.preventDefault(); resumeZone.style.borderColor = '#34c759'; resumeZone.style.background = '#f0faf4'; });
+resumeZone.addEventListener('dragleave', () => { resumeZone.style.borderColor = '#d1d1d6'; resumeZone.style.background = ''; });
+resumeZone.addEventListener('drop', e => {
+  e.preventDefault(); resumeZone.style.borderColor = '#d1d1d6'; resumeZone.style.background = '';
+  const file = e.dataTransfer.files[0];
+  if (file) uploadResume(file);
+});
+resumeFileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) uploadResume(file);
+});
+
+async function uploadResume(file) {
+  resumeZone.style.opacity = '0.5';
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res = await fetch(API + '/api/resume/upload', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.error) { alert(data.error); } else { showResume(data.resume); }
+  } catch(e) { alert('上传失败: ' + e.message); }
+  resumeZone.style.opacity = '1';
+  resumeFileInput.value = '';
+}
+
+function showResume(r) {
+  document.getElementById('resumePreview').style.display = 'block';
+  resumeZone.style.display = 'none';
+  document.getElementById('resumeMaskSummary').textContent = '脱敏处理：' + (r.desensitization_summary || '');
+  // 只显示关键段落
+  let preview = '';
+  if (r.personal_info) preview += '【个人信息】\n' + r.personal_info + '\n';
+  if (r.work_experience) preview += '【工作经历】\n' + r.work_experience.slice(0,300) + (r.work_experience.length>300?'...':'') + '\n';
+  if (r.skills) preview += '【技能】\n' + r.skills.slice(0,200) + '\n';
+  document.getElementById('resumeText').textContent = preview;
+  document.getElementById('statusResume').innerHTML = '● 简历: <span style="color:#34c759">已上传 ✓</span>';
+  updateButtons();
+}
+
+async function removeResume() {
+  await fetch(API + '/api/resume', { method: 'DELETE' });
+  document.getElementById('resumePreview').style.display = 'none';
+  resumeZone.style.display = 'block';
+  document.getElementById('statusResume').innerHTML = '● 简历: <span style="color:#d1d1d6">未上传</span>';
+  updateButtons();
+}
+
+// ── 检查已有简历 ──
+async function checkResume() {
+  const res = await fetch(API + '/api/resume');
+  const data = await res.json();
+  if (data.resume) { showResume(data.resume); } else {
+    document.getElementById('statusResume').innerHTML = '● 简历: <span style="color:#d1d1d6">未上传</span>';
+  }
+}
+
+// ── LLM 配置 ──
+function showConfigModal() { document.getElementById('configModal').classList.add('show'); }
+function hideConfigModal() { document.getElementById('configModal').classList.remove('show'); }
+
+async function loadConfig() {
+  const res = await fetch(API + '/api/llm_config');
+  const data = await res.json();
+  const c = data.config;
+  if (c) {
+    document.getElementById('cfgProvider').value = c.provider || 'openai';
+    document.getElementById('cfgApiKey').value = c.api_key_masked || '';
+    document.getElementById('cfgBaseUrl').value = c.base_url || 'https://api.openai.com/v1';
+    document.getElementById('cfgModel').value = c.model || 'gpt-4o';
+    document.getElementById('statusLLM').innerHTML = `● LLM: <span style="color:#34c759">${c.model} ✓</span>`;
+  } else {
+    document.getElementById('statusLLM').innerHTML = '● LLM: <span style="color:#d1d1d6">未配置</span>';
+  }
+  updateButtons();
+}
+
+async function saveConfig() {
+  const provider = document.getElementById('cfgProvider').value;
+  const api_key = document.getElementById('cfgApiKey').value;
+  const base_url = document.getElementById('cfgBaseUrl').value;
+  const model = document.getElementById('cfgModel').value;
+
+  const res = await fetch(API + '/api/llm_config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ api_key, base_url, model, provider })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    hideConfigModal();
+    loadConfig();
+  } else {
+    alert('保存失败');
+  }
+}
+
+// ── 按钮状态 ──
+function updateButtons() {
+  // 简历建议按钮需要简历
+  const hasResume = document.getElementById('resumePreview').style.display !== 'none';
+  document.getElementById('btnResume').disabled = !hasResume;
+}
+
+// ── 生成市场分析报告 ──
+async function generateMarketReport() {
+  const btn = document.getElementById('btnMarket');
+  btn.disabled = true;
+  btn.textContent = '⏳ 生成中...';
+
+  try {
+    const res = await fetch(API + '/api/market_report', { method: 'POST' });
+    const data = await res.json();
+    if (data.error) { alert(data.error); } else {
+      document.getElementById('reportCard').style.display = 'block';
+      document.getElementById('reportTitle').textContent = '📊 市场分析报告';
+      document.getElementById('reportContent').textContent = data.report;
+      document.getElementById('reportCard').scrollIntoView({ behavior: 'smooth' });
+    }
+  } catch(e) { alert('请求失败: ' + e.message); }
+
+  btn.disabled = false;
+  btn.textContent = '📊 市场分析报告';
+}
+
+// ── 生成简历优化建议 ──
+async function generateResumeFeedback() {
+  const btn = document.getElementById('btnResume');
+  btn.disabled = true;
+  btn.textContent = '⏳ 分析中...';
+
+  try {
+    const res = await fetch(API + '/api/resume_feedback', { method: 'POST' });
+    const data = await res.json();
+    if (data.error) { alert(data.error); } else {
+      document.getElementById('reportCard').style.display = 'block';
+      document.getElementById('reportTitle').textContent = '💡 简历优化建议';
+      document.getElementById('reportContent').textContent = data.feedback;
+      document.getElementById('reportCard').scrollIntoView({ behavior: 'smooth' });
+    }
+  } catch(e) { alert('请求失败: ' + e.message); }
+
+  btn.disabled = updateButtons();
+  btn.textContent = '💡 简历优化建议';
+}
+
+function copyReport() {
+  navigator.clipboard.writeText(document.getElementById('reportContent').textContent)
+    .then(() => alert('已复制到剪贴板'));
+}
+
+function downloadReport() {
+  const title = document.getElementById('reportTitle').textContent.replace(/[📊💡]/g, '').trim() || '分析报告';
+  const content = document.getElementById('reportContent').textContent;
+  if (!content) { alert('没有报告内容'); return; }
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${title}_${new Date().toISOString().slice(0,10)}.md`;
+  a.click();
+}
+
+// ── 导出 ──
+async function exportCSV() {
+  const res = await fetch(API + '/api/jobs');
+  const data = await res.json();
+  const jobs = data.jobs || [];
+  if (!jobs.length) { alert('没有数据'); return; }
+  const headers = ['岗位名称','薪资','城市','公司','经验','学历','技能','能力分类','来源'];
+  const rows = jobs.map(j => [j.job_title,j.salary,j.city,j.company,j.experience,j.education,(j.skills||[]).join('|'),(j.categories||[]).join('|'),j.source]);
+  const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(c=>`"${(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadBlob(csv, `jd_analysis_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8');
+}
+
+async function exportRawCSV() {
+  const res = await fetch(API + '/api/jobs');
+  const data = await res.json();
+  const jobs = data.jobs || [];
+  if (!jobs.length) { alert('没有数据'); return; }
+  const headers = ['岗位名称','薪资','城市','公司','经验要求','学历要求','岗位职责','岗位要求','加分项','其他描述'];
+  const rows = jobs.map(j => [j.job_title,j.salary,j.city,j.company,j.experience,j.education,(j.section_duties||'').replace(/\n/g,' '),(j.section_requirements||'').replace(/\n/g,' '),(j.section_bonus||'').replace(/\n/g,' '),(j.section_other||'').replace(/\n/g,' ')]);
+  const csv = '\uFEFF' + [headers,...rows].map(r=>r.map(c=>`"${(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadBlob(csv, `jd_structured_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8');
+}
+
+function downloadBlob(content, filename, type) {
+  const blob = new Blob([content], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+// ── 关闭提示 ──
+window.addEventListener('beforeunload', e => {
+  const stats = document.getElementById('headerStats').textContent;
+  if (stats && stats.includes('已收集 ') && !stats.includes('已收集 0')) {
+    e.preventDefault();
+    e.returnValue = '您有未导出的岗位数据，确定要离开吗？';
+  }
+});
+
+// ── 初始化 ──
+loadJobs();
+checkResume();
+loadConfig();
+</script>
+</body>
+</html>
